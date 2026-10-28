@@ -4,7 +4,6 @@ dataset: HuggingFaceH4/ultrachat_200k
 model_revision: main
 encoder_revision: main
 dataset_revision: main
-vllm_version: 0.20.0
 calibration_size: 5000
 heldout_size: 1500
 prompt_min_tokens: 16

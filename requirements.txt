@@ -1,6 +1,6 @@
 # Application dependency contract. run_colab.sh never installs this file.
 # Use the notebook's existing native runtime.
-vllm==0.20.0; sys_platform == "linux"
+vllm; sys_platform == "linux"
 transformers>=4.57,<6,!=5.0.*,!=5.1.*,!=5.2.*,!=5.3.*,!=5.4.*,!=5.5.0
 accelerate>=1.0,<2
 sentence-transformers>=3.0,<7

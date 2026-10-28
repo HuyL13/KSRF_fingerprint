@@ -23,7 +23,7 @@ def run(cfg):
                       + ", ".join(plugin.name for plugin in plugins))
     if errors:
         raise RuntimeError("Preflight failed:\n  - " + "\n  - ".join(errors))
-    report = audit_environment(cfg["vllm_version"])
+    report = audit_environment()
     native = report["native"]["details"]
     if len(native.get("devices", [])) < cfg["tensor_parallel_size"]:
         report["errors"].append("tensor_parallel_size exceeds allocated CUDA devices")

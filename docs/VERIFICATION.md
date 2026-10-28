@@ -52,3 +52,11 @@ at the user's request; the runner now has 14 experiment stages. Runtime metadata
 needed by the report is recorded during actual clean generation instead.
 Architecture-level CPU checks on actual Qwen2/BERT implementations passed. See
 `COLAB_COMPATIBILITY.md` for the exact stack and verification limits.
+
+Follow-up to the actual Colab vLLM 0.32.0 traceback: removed the hardcoded
+0.20.0 version gate from generation and the optional doctor. A regression
+fixture with runtime version 0.32.0 and an old resolved config containing 0.20.0
+reproduced the reported failure before the fix, then reached engine generation
+and recorded 0.32.0 after the fix. This fixture verifies gate removal, not real
+GPU execution. The published 0.32.0 LLM, SamplingParams, EngineArgs, adapter and
+sampler interfaces used here were inspected; no package was installed or changed.

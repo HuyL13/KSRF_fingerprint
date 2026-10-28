@@ -5,6 +5,15 @@ experiment Bash entrypoint starts its 14 experiment stages directly. It does
 not call the separate `doctor`/`preflight` environment diagnostics, install
 packages or replace the notebook's existing native runtime.
 
+Update after the user's actual Colab traceback: the installed vLLM is **0.32.0**.
+The old hardcoded 0.20.0 generation gate was incorrect for that runtime and has
+been removed, including from the optional doctor. Existing resolved configs
+containing the old field are ignored for library-version selection. The
+requirements entry no longer pins vLLM. Exact versions are recorded, not enforced.
+The 0.32.0 LLM/SamplingParams/AdapterLogitsProcessor/sampler source interfaces were
+inspected directly; the API used by this project remains present and the custom
+non-argmax-invariant processor still runs before temperature.
+
 ## Official snapshot compared
 
 Source: [googlecolab/backend-info GPU package snapshot](https://github.com/googlecolab/backend-info/blob/aaf59a1929a8b637ef5d41272647c8bee3f8fe7c/pip-freeze.gpu.txt),
@@ -69,7 +78,7 @@ This separate command:
    imports the actual modules and named symbols. It also imports every project
    module and forces Qwen2/BERT model-class imports that Transformers otherwise
    resolves lazily.
-3. Checks the constructor/call signatures used by the pinned vLLM processor,
+3. Checks the constructor/call signatures used by the installed vLLM processor,
    sparse processed logprobs, SentenceTransformer encoding and SciPy CG.
 4. Imports vLLM's compiled `_C` extension and executes its CUDA RMSNorm kernel
    on a small bfloat16 tensor. This can expose native-wheel/driver errors that

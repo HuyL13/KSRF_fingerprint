@@ -7,7 +7,7 @@ perturbed decoding. **This experiment does not train LoRA or implant a fingerpri
 ## Run the complete experiment on Google Colab
 
 Use a Linux Colab GPU runtime with **bfloat16 support (L4/A100 or newer)** and an
-existing, working **vLLM 0.20.0 / compatible Torch-CUDA** environment. The complete
+existing, working **vLLM / compatible Torch-CUDA** environment. The complete
 dependency contract is [requirements.txt](requirements.txt). The Bash entrypoint
 starts the experiment directly: it does not scan the environment, install anything,
 create an environment, or change Torch/CUDA. Check available runtime/storage resources:
@@ -120,6 +120,11 @@ match as proof of CUDA binary compatibility.
 The full Bash pipeline has 14 experiment stages. Mathematical score identity,
 vLLM/HF parity, EOS/length and signed-bias tests remain scientific prerequisites;
 they are not generic environment checks.
+
+The runner uses the installed vLLM without a version gate. Its actual version is
+recorded in rollouts and runtime provenance, rather than enforced from config.
+Constructor/sampling/processor source APIs were inspected for 0.20.0 and 0.32.0;
+real distribution parity is still measured by the experiment on the actual GPU.
 
 The Bash entrypoint invokes the full pipeline. Individual stage entrypoints are
 also available for debugging, using a run's **resolved** configuration:

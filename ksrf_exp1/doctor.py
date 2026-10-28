@@ -104,7 +104,7 @@ def dependency_audit(requirements):
     return {"checked_versions": checked, "errors": sorted(set(errors))}
 
 
-def gpu_and_native_audit(expected_vllm):
+def gpu_and_native_audit():
     details = {}
     errors = []
     if platform.system() != "Linux":
@@ -122,8 +122,6 @@ def gpu_and_native_audit(expected_vllm):
             raise RuntimeError("bfloat16 vLLM requires compute capability >= 8.0 (e.g. L4/A100); T4 is unsupported")
         installed_vllm = metadata.version("vllm")
         details["vllm"] = installed_vllm
-        if installed_vllm != expected_vllm:
-            raise RuntimeError(f"Expected pinned vLLM {expected_vllm}, found {installed_vllm}")
         # Matching torch's public version is necessary but not sufficient for ABI
         # compatibility. Load and EXECUTE the installed native CUDA extension.
         importlib.import_module("vllm._C")
@@ -166,7 +164,7 @@ def api_audit():
         raise RuntimeError("Unsupported vLLM AdapterLogitsProcessor API")
 
 
-def audit_environment(expected_vllm="0.20.0", package_root=None):
+def audit_environment(package_root=None):
     root = Path(package_root or Path(__file__).parent)
     result = {"status": "FAIL", "python": sys.version, "platform": platform.platform(),
               "installation_performed": False, "errors": []}
@@ -202,7 +200,7 @@ def audit_environment(expected_vllm="0.20.0", package_root=None):
     except Exception as error:
         result["api_signatures"] = "NOT_PASSED"
         result["errors"].append(f"API: {type(error).__name__}: {error}")
-    result["native"] = gpu_and_native_audit(expected_vllm)
+    result["native"] = gpu_and_native_audit()
     result["errors"].extend(result["native"]["errors"])
     result["errors"] = sorted(set(result["errors"]))
     result["status"] = "PASS" if not result["errors"] else "FAIL"

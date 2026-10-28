@@ -15,8 +15,6 @@ def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset
     from transformers import AutoTokenizer, AutoConfig, GenerationConfig
     cfg = frozen_config(cfg)
     version = importlib.metadata.version('vllm')
-    if version != cfg['vllm_version']:
-        raise RuntimeError('Expected pinned vLLM ' + cfg['vllm_version'] + ', found ' + version)
     tok = AutoTokenizer.from_pretrained(cfg['model'], revision=cfg['tokenizer_revision'])
     config = AutoConfig.from_pretrained(cfg['model'], revision=cfg['model_revision'])
     generation_config = GenerationConfig.from_pretrained(cfg['model'], revision=cfg['model_revision'])

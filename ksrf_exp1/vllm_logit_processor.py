@@ -1,4 +1,4 @@
-"""vLLM 0.20 adapter; upstream owns request movement and removal."""
+"""vLLM request adapter; upstream owns request movement and removal."""
 import numpy as np
 import torch
 from vllm.v1.sample.logits_processor import AdapterLogitsProcessor

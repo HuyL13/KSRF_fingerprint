@@ -20,7 +20,8 @@ The project imports the installed vLLM adapter directly rather than copying
 its scheduler. `AdapterLogitsProcessor` owns added/removed/moved request state,
 including continuous batching. The custom layer supplies only a full-vocabulary
 GPU bias vector and an exact eta-zero bypass. This is why the vLLM version is
-pinned and checked. The upstream sampler applies non-argmax-invariant custom
+recorded for reproducibility. The old hardcoded version gate has been removed;
+the user's installed 0.32.0 APIs were also inspected. The upstream sampler applies non-argmax-invariant custom
 processors before temperature, so the raw correction is `temperature * eta * bias`.
 
 The initial local search was not sufficient to establish maximum source reuse.

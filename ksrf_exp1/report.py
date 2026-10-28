@@ -105,8 +105,9 @@ def run(cfg):
     lines = ["# KSRF Experiment 1", "", f"**Decision: {decision['decision']}**", ""]
     lines.extend(f"- {reason}" for reason in decision["reasons"])
     lines.extend(["", "## Data and runtime", "", "| Item | Value |", "|---|---|"])
-    for key in ["model", "model_revision", "tokenizer_revision", "encoder", "encoder_revision", "dataset", "dataset_revision", "vllm_version"]:
+    for key in ["model", "model_revision", "tokenizer_revision", "encoder", "encoder_revision", "dataset", "dataset_revision"]:
         lines.append(f"| {key} | `{frozen[key]}` |")
+    lines.append(f"| vllm_version (actually used) | `{evidence['environment']['versions']['vllm']}` |")
     lines.extend([f"| Processor API | `{evidence['environment']['processor_api']}` |",
                   f"| GPU | {', '.join(evidence['environment']['gpu_names'])} |",
                   f"| Generation batch size | {cfg['generation_batch_size']} |",
