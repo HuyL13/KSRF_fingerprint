@@ -46,7 +46,10 @@ imports of an installed numerical library. They are self-contained under
 | `imf-tier0-ptq/src/imf_tier0/data/io.py` | `_atomic_text`, `read_jsonl` | `_reused/imf_data_io.py` | `common.py`, hence pipeline artifact readers/writers |
 | `imf-tier0-ptq/src/imf_tier0/manifest.py` | `sha256_file` | `_reused/imf_provenance.py` | `common.file_checksum`, final artifact integrity index |
 
-**Five function bodies are unchanged.** `teacher_forced_logits` retains the
+**Four function bodies are unchanged.** `prompt_ids` now explicitly requests
+`return_dict=False` from chat templating and validates integer token IDs, because
+Transformers 5 otherwise returns mapping keys when the original function calls
+`list(...)`. `teacher_forced_logits` retains the
 original token construction, context check, attention mask, inference call and
 causal slicing. Two adaptations are explicitly marked:
 
@@ -72,7 +75,8 @@ Source revisions:
 
 `local_reuse_sources.json` records source file hashes, original function hashes,
 line numbers and destination paths. Function-body comparisons verify the five
-unchanged excerpts rather than relying on a prose claim.
+unchanged excerpts rather than relying on a prose claim. Two functions are now
+adapted: prompt tokenization and teacher-forced replay.
 
 ## Inspected alternatives and why they were not incorporated
 

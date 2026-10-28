@@ -17,8 +17,8 @@
         "source_start_line": 27,
         "source_end_line": 42,
         "original_function_sha256": "562023b74b472da08d64958e1099ab1ac5e6a9eca66d8cd7b065cec4f88c0fed",
-        "incorporated_function_sha256": "562023b74b472da08d64958e1099ab1ac5e6a9eca66d8cd7b065cec4f88c0fed",
-        "mode": "unchanged"
+        "incorporated_function_sha256": "c996e64a63cde0dbca2043c810bb545d45907f51c587fd6b946e8d401d803c1c",
+        "mode": "adapted"
       },
       {
         "name": "teacher_forced_logits",

@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from .common import output_dir, read_jsonl, write_json, write_jsonl
 from .data import frozen_config
+from ._reused.phase1_runtime import prompt_ids
 
 
 def diagnostic_logprobs(token_ids):
@@ -22,6 +23,10 @@ def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset
     from vllm import LLM, SamplingParams
     from transformers import AutoTokenizer, AutoConfig, GenerationConfig
     cfg = frozen_config(cfg)
+    # Validate saved trajectory inputs before allocating an engine. Never
+    # reconstruct token IDs by re-tokenizing previously decoded text.
+    records = [dict(record, prompt_token_ids=prompt_ids(
+        None, record, {'max_prompt_length': cfg['max_model_len']})) for record in records]
     version = importlib.metadata.version('vllm')
     tok = AutoTokenizer.from_pretrained(cfg['model'], revision=cfg['tokenizer_revision'])
     config = AutoConfig.from_pretrained(cfg['model'], revision=cfg['model_revision'])

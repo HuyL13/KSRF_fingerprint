@@ -18,12 +18,17 @@ def prompt_ids(tokenizer, query, config):
             if config.get('system_prompt'):
                 messages.append(dict(role='system', content=config['system_prompt']))
             messages.append(dict(role='user', content=query['prompt']))
-        ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True)
+        # Transformers 5 defaults to BatchEncoding; list(mapping) yields keys.
+        ids = tokenizer.apply_chat_template(messages, tokenize=True,
+                                            add_generation_prompt=True, return_dict=False)
     else:
         ids = tokenizer.encode(query['prompt'], add_special_tokens=config.get('add_special_tokens', True))
     if not ids or len(ids) > config.get('max_prompt_length', 2048):
         raise ValueError('Empty/overlength prompt; inputs are never silently truncated')
-    return list(ids)
+    if any(isinstance(token, (bool, np.bool_)) or
+           not isinstance(token, (int, np.integer)) or token < 0 for token in ids):
+        raise ValueError('prompt_token_ids must contain nonnegative integers; rebuild prepared prompts')
+    return [int(token) for token in ids]
 
 
 def teacher_forced_logits(model, tokenizer, query, config):

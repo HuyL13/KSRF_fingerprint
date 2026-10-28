@@ -68,3 +68,12 @@ readout smoke tests. The unchanged upstream validator rejected the old request
 and accepted the fixed five-ID, six-ID and ordinary top-logprob requests in an
 isolated CPU invocation. This proves request-validation compatibility, not a
 completed GPU parity run. No dependency or environment change was made.
+
+Transformers 5 prompt-ID follow-up: an actual existing tokenizer reproduced
+`BatchEncoding` becoming `['input_ids', 'attention_mask']` through `list(...)`.
+The reused prompt helper now requests `return_dict=False` explicitly and checks
+nonnegative integer IDs. Three regression checks and an actual Transformers 5
+tokenizer invocation pass after the fix. The generation boundary also rejects
+malformed saved IDs before engine allocation. Previously generated prompt files
+with string keys must be regenerated; they are not silently re-tokenized.
+Current local-source reuse has four unchanged and two adapted function bodies.
