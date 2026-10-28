@@ -19,7 +19,6 @@ def diagnostic_logprobs(token_ids):
 
 def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset=0, diagnostic=False):
     os.environ['VLLM_PLUGINS'] = ''
-    os.environ['VLLM_LOGITS_PROCESSOR_PLUGINS'] = ''
     from vllm import LLM, SamplingParams
     from transformers import AutoTokenizer, AutoConfig, GenerationConfig
     cfg = frozen_config(cfg)

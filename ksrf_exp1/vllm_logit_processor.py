@@ -2,8 +2,13 @@
 import numpy as np
 import torch
 from vllm.v1.sample.logits_processor import AdapterLogitsProcessor
+try:
+    from vllm.v1.worker.gpu.sample.logits_processor import LogitsProcessor as V2LogitsProcessor
+except ImportError:
+    class V2LogitsProcessor:
+        """Older installations expose only the V1 runner interface."""
 
-class KSRFLogitsProcessor(AdapterLogitsProcessor):
+class KSRFLogitsProcessor(AdapterLogitsProcessor, V2LogitsProcessor):
 
     @classmethod
     def validate_params(cls, sampling_params):
@@ -22,10 +27,32 @@ class KSRFLogitsProcessor(AdapterLogitsProcessor):
         if not isinstance(extra.get('ksrf_features'), str) or not extra['ksrf_features']:
             raise ValueError('KSRF requires a shared readout-feature NPZ path')
 
-    def __init__(self, vllm_config, device, is_pin_memory):
-        super().__init__(vllm_config, device, is_pin_memory)
-        self.device = device
+    def __init__(self, vllm_config, device, is_pin_memory=None):
+        if hasattr(device, 'max_num_reqs'):
+            self.device = device.device
+        else:
+            AdapterLogitsProcessor.__init__(self, vllm_config, device, is_pin_memory)
+            self.device = device
         self.features = {}
+        self.slot_processors = {}
+
+    def add_request(self, req_idx, sampling_params):
+        processor = self.new_req_logits_processor(sampling_params)
+        self.slot_processors.pop(req_idx, None)
+        if processor is not None:
+            self.slot_processors[req_idx] = processor
+        return processor is not None
+
+    def apply(self, logits, ctx=None):
+        if ctx is None:
+            return AdapterLogitsProcessor.apply(self, logits)
+        # V2 rows are reordered independently of persistent request slots.
+        for req_idx in ctx.idx_mapping_np:
+            processor = self.slot_processors.get(int(req_idx))
+            if processor is not None:
+                mask = ctx.expanded_idx_mapping == int(req_idx)
+                logits[mask] = processor([], logits[mask])
+        return logits
 
     def is_argmax_invariant(self):
         return False
