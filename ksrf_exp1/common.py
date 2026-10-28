@@ -7,34 +7,29 @@ import json
 from pathlib import Path
 
 import numpy as np
+from ._reused.imf_data_io import _atomic_text, read_jsonl as _read_jsonl
+from ._reused.imf_provenance import sha256_file as file_checksum
 
 
 def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False,
-                                   allow_nan=False) + "\n", encoding="utf-8")
-    temporary.replace(path)
-
-
 def read_jsonl(path):
-    with Path(path).open(encoding="utf-8") as stream:
-        return [json.loads(line) for line in stream if line.strip()]
+    return _read_jsonl(Path(path))
+
+
+def write_json(path, value):
+    _atomic_text(Path(path), json.dumps(value, indent=2, ensure_ascii=False,
+                                       allow_nan=False) + "\n")
 
 
 def write_jsonl(path, records):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="\n") as stream:
-        for row in records:
-            stream.write(json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n")
-    temporary.replace(path)
+    # Serialize before opening a temporary file: invalid numeric values leave
+    # both the previous artifact and its directory untouched.
+    content = "".join(json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n"
+                      for row in records)
+    _atomic_text(Path(path), content)
 
 
 def save_npz(path, **arrays):
@@ -55,14 +50,6 @@ def load_npz(path):
 def checksum(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True,
                                     ensure_ascii=False).encode()).hexdigest()
-
-
-def file_checksum(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def versions(names):

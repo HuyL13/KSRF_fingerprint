@@ -2,6 +2,7 @@
 import numpy as np
 from .common import checksum, load_npz, output_dir, read_jsonl, save_npz, write_json
 from .data import frozen_config
+from ._reused.phase1_runtime import teacher_forced_logits
 
 def load_model(cfg):
     import torch
@@ -14,14 +15,14 @@ def load_model(cfg):
         attn_implementation='sdpa').eval().requires_grad_(False)
 
 def response_logits(model, record):
-    import torch
     prompt = record['prompt_token_ids']
     sampled = record['generated_token_ids_including_sampled_eos']
     if not prompt or not sampled:
         raise ValueError('Empty trajectory')
-    ids = torch.tensor([prompt + sampled], device=next(model.parameters()).device)
-    with torch.inference_mode():
-        return model(input_ids=ids, use_cache=False).logits[0, len(prompt) - 1:len(prompt) + len(sampled) - 1].float()
+    logits, _ = teacher_forced_logits(
+        model, None, {'prompt_token_ids': prompt, 'target_token_ids': sampled},
+        {'max_prompt_length': len(prompt)})
+    return logits
 
 def score_logits(logits, sampled, features, temperature, chunk_size=16):
     import torch

@@ -107,9 +107,11 @@ def check_replay_indexing():
             super().__init__()
             self.anchor = torch.nn.Parameter(torch.zeros(()), requires_grad=False)
 
-        def forward(self, input_ids, use_cache):
+        def forward(self, input_ids, attention_mask, use_cache):
             if input_ids.tolist() != [[1, 0, 0, 1, 2]] or use_cache:
                 raise AssertionError("Replay changed saved token IDs")
+            if not torch.all(attention_mask == 1):
+                raise AssertionError("Replay unexpectedly masked sampled tokens")
             return SimpleNamespace(logits=table[None, :, :])
 
     record = {"prompt_token_ids": [1, 0],

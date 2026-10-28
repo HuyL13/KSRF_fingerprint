@@ -117,8 +117,9 @@ prerequisite artifacts first. Start a fresh full run after changing parameters.
 
 ## Reuse and verification
 
-See [UPSTREAM.md](docs/UPSTREAM.md) for the exact local upstream inspected and the
-library functions reused. KSRF-specific Fisher/bridge/key/score logic is the main
+See [LOCAL_CODE_REUSE.md](docs/LOCAL_CODE_REUSE.md) for actual local source code
+incorporated into prompt handling, teacher-forced replay, atomic I/O and hashing,
+and [UPSTREAM.md](docs/UPSTREAM.md) for library/API reuse. KSRF-specific Fisher/bridge/key/score logic is the main
 custom code. PCA, ridge regression, bootstrap, root finding, principal angles,
 iterative solves, embeddings and vLLM request movement reuse upstream libraries.
 

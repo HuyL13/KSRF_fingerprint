@@ -1,0 +1,77 @@
+[
+  {
+    "source": "phase1_if_analysis/src/phase1/runtime.py",
+    "source_sha256": "b460a6ab5318e866dcf602667ddb1e97ba126b89a120d50e9734139b7e82a997",
+    "destination": "ksrf_exp1/_reused/phase1_runtime.py",
+    "functions": [
+      {
+        "name": "device_of",
+        "source_start_line": 23,
+        "source_end_line": 24,
+        "original_function_sha256": "a2b623940677432428e0c29345dc0fb5a457525f30a99db7467b28819063fee9",
+        "incorporated_function_sha256": "a2b623940677432428e0c29345dc0fb5a457525f30a99db7467b28819063fee9",
+        "mode": "unchanged"
+      },
+      {
+        "name": "prompt_ids",
+        "source_start_line": 27,
+        "source_end_line": 42,
+        "original_function_sha256": "562023b74b472da08d64958e1099ab1ac5e6a9eca66d8cd7b065cec4f88c0fed",
+        "incorporated_function_sha256": "562023b74b472da08d64958e1099ab1ac5e6a9eca66d8cd7b065cec4f88c0fed",
+        "mode": "unchanged"
+      },
+      {
+        "name": "teacher_forced_logits",
+        "source_start_line": 45,
+        "source_end_line": 61,
+        "original_function_sha256": "1a7a88cdbf99a9cef66758c1563d20d3932474e422f0e5822acdf33339b17a50",
+        "incorporated_function_sha256": "5485612c01fab397b7bfc4c36152a3a78186f58a989adde0f2fdc05db5e75fdd",
+        "mode": "adapted"
+      }
+    ],
+    "source_repository": "https://github.com/HuyL13/phase1_if_analysis",
+    "source_checkout_commit": "a7ca5abe5d1266415af4d0d34fa4928f14695efd"
+  },
+  {
+    "source": "imf-tier0-ptq/src/imf_tier0/data/io.py",
+    "source_sha256": "c8b424a9c4f1689455c1c5e2ac5f7a9a15a9324487748954590ce96011aa55f3",
+    "destination": "ksrf_exp1/_reused/imf_data_io.py",
+    "functions": [
+      {
+        "name": "_atomic_text",
+        "source_start_line": 14,
+        "source_end_line": 25,
+        "original_function_sha256": "1d321a4c615c79b100656688806d4556cf79ab52ae67380e74ed2a224efbee54",
+        "incorporated_function_sha256": "1d321a4c615c79b100656688806d4556cf79ab52ae67380e74ed2a224efbee54",
+        "mode": "unchanged"
+      },
+      {
+        "name": "read_jsonl",
+        "source_start_line": 35,
+        "source_end_line": 44,
+        "original_function_sha256": "49e1e7799640c48cc158f1aa425bd810dd858e0c8de9338a0a7e9622ed22664c",
+        "incorporated_function_sha256": "49e1e7799640c48cc158f1aa425bd810dd858e0c8de9338a0a7e9622ed22664c",
+        "mode": "unchanged"
+      }
+    ],
+    "source_repository": "https://github.com/HuyL13/imf-tier0-ptq",
+    "source_checkout_commit": "94931f65e1eb3454200174118db10f06363a3ff5"
+  },
+  {
+    "source": "imf-tier0-ptq/src/imf_tier0/manifest.py",
+    "source_sha256": "fe5e318e80273e77ff2111ee5eb5f73d295855339375a9b30e6f850810a28f7d",
+    "destination": "ksrf_exp1/_reused/imf_provenance.py",
+    "functions": [
+      {
+        "name": "sha256_file",
+        "source_start_line": 11,
+        "source_end_line": 16,
+        "original_function_sha256": "56851922669f154c982f1f43845fe689de10ac83793c942f5cdfff134e66112c",
+        "incorporated_function_sha256": "56851922669f154c982f1f43845fe689de10ac83793c942f5cdfff134e66112c",
+        "mode": "unchanged"
+      }
+    ],
+    "source_repository": "https://github.com/HuyL13/imf-tier0-ptq",
+    "source_checkout_commit": "94931f65e1eb3454200174118db10f06363a3ff5"
+  }
+]

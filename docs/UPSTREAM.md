@@ -23,11 +23,13 @@ GPU bias vector and an exact eta-zero bypass. This is why the vLLM version is
 pinned and checked. The upstream sampler applies non-argmax-invariant custom
 processors before temperature, so the raw correction is `temperature * eta * bias`.
 
-Existing local fingerprint projects (`if_awq_tier0`, `phaseA_fingerprint`,
-`LLM-Fingerprint-and-Attacks`, `MEraser`) were searched for reusable semantic
-bridge/statistical components. Their available fingerprint scoring/quantization
-logic did not implement this experiment's estimator; importing those heuristics
-would change the research question, so standard numerical libraries are reused.
+The initial local search was not sufficient to establish maximum source reuse.
+A follow-up inventory and candidate review now incorporates six actual local
+functions from three files, used by prompt formatting, teacher-forced replay,
+durable artifact I/O and hashing. See [LOCAL_CODE_REUSE.md](LOCAL_CODE_REUSE.md)
+for the inspected candidates, unchanged versus adapted code, source revisions
+and reasons for excluding incompatible estimators. Library/API reuse below is
+listed separately from that actual local source-code reuse.
 
 ## Reused implementation components
 

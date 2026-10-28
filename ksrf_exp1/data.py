@@ -1,5 +1,6 @@
 """Frozen Hugging Face revisions and disjoint prompt selection."""
 from .common import checksum, output_dir, read_json, write_json, write_jsonl
+from ._reused.phase1_runtime import prompt_ids
 
 def frozen_config(cfg):
     path = output_dir(cfg) / 'manifest.json'
@@ -44,7 +45,8 @@ def run(cfg):
                 skipped.append({'prompt_id': pid, 'split': split, 'reason': reason})
                 continue
             seen.update([pid, checksum(text)])
-            ids = tok.apply_chat_template([{'role': 'user', 'content': text}], tokenize=True, add_generation_prompt=True)
+            ids = prompt_ids(tok, {'prompt': text},
+                             {'prompt_mode': 'chat', 'max_prompt_length': cfg['max_model_len']})
             records.append(dict(prompt_id=pid,
                 prompt_text=text,
                 prompt_token_ids=ids,

@@ -34,3 +34,12 @@ before making experimental claims.
 Temporary implementation test files were removed after execution. The delivered
 `ksrf_exp1.mathematics` module remains an executable prerequisite of every full
 run; it is not a replacement for the real-model GPU checks.
+
+Follow-up local source reuse was checked with three regression cases: rejecting
+non-object JSONL rows, preserving an existing artifact without leftover temporary
+files after failed serialization, and rejecting teacher-forced context overflow
+before forwarding the model. All three failed against the previous implementation
+and passed after integrating the local code. The delivered mathematical/replay
+diagnostic also passes after the integration. Five reused function bodies were
+compared against their original source and match exactly; the one adapted
+teacher-forcing function is explicitly documented in `LOCAL_CODE_REUSE.md`.
