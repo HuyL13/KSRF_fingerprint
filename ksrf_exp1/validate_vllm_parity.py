@@ -6,6 +6,51 @@ import numpy as np
 from .common import load_npz, output_dir, read_json, read_jsonl, save_npz, write_json, write_jsonl
 from .data import frozen_config
 
+
+def compare_common_contexts(reference, candidate, token_ids, tolerance):
+    """Compare distributions only while both requests have the same history.
+
+    GPU kernel differences across batch layouts can change a sampled token.
+    Subsequent distributions then have different conditioning and cannot be
+    compared. Exact trajectory equality is reported, never assumed.
+    """
+    if not reference or len(reference) != len(candidate):
+        raise ValueError('Parity request count mismatch')
+    errors = []
+    contexts = 0
+    trajectories_match = True
+    exact_output_match = True
+    for left, right in zip(reference, candidate):
+        for field in ['prompt_id', 'prompt_token_ids', 'sampling_seed']:
+            if left[field] != right[field]:
+                raise ValueError(f'Parity request alignment mismatch: {field}')
+        left_ids = left['generated_token_ids_including_sampled_eos']
+        right_ids = right['generated_token_ids_including_sampled_eos']
+        if not left_ids or not right_ids:
+            raise ValueError('Parity received an empty sampled trajectory')
+        if len(left_ids) != len(left['logprobs']) or len(right_ids) != len(right['logprobs']):
+            raise ValueError('Parity token/logprob lengths differ')
+        trajectories_match &= left_ids == right_ids
+        exact_output_match &= (left_ids == right_ids and left['logprobs'] == right['logprobs']
+                               and left['stop_reason'] == right['stop_reason'])
+        for index, (left_token, right_token) in enumerate(zip(left_ids, right_ids)):
+            a, b = left['logprobs'][index], right['logprobs'][index]
+            for token in token_ids:
+                key = str(token)
+                if key not in a or key not in b:
+                    raise ValueError(f'Parity missing diagnostic token {token}')
+                if not np.isfinite(a[key]) or not np.isfinite(b[key]):
+                    raise ValueError('Parity received nonfinite diagnostic logprobs')
+                errors.append(abs(a[key] - b[key]))
+            contexts += 1
+            if left_token != right_token:
+                break
+    maximum = float(max(errors)) if errors else None
+    return {'within_tolerance': maximum is not None and maximum <= tolerance,
+            'max_abs_logprob_error': maximum, 'contexts_compared': contexts,
+            'trajectories_match': bool(trajectories_match),
+            'exact_output_match': bool(exact_output_match), 'tolerance': tolerance}
+
 def _child(cfg, mode):
     out = output_dir(cfg)
     if mode.startswith('smoke-'):
@@ -89,30 +134,18 @@ def run(cfg):
         clean = read_jsonl(out / 'parity_clean.jsonl')
         zero = read_jsonl(out / 'parity_zero.jsonl')
         single = read_jsonl(out / 'parity_single.jsonl')
-        noop = all((a['generated_token_ids_including_sampled_eos'] == b['generated_token_ids_including_sampled_eos'] and a['logprobs'] == b['logprobs'] for a,
-            b in zip(clean,
-            zero)))
-        batch_error = max((abs(a['logprobs'][0][str(k)] - b['logprobs'][0][str(k)]) for a,
-            b in zip(clean,
-            single) for k in cfg['diagnostic_token_ids']))
-        batch_alignment = len(clean) == len(single) and all(
-            a['prompt_id'] == b['prompt_id']
-            and a['prompt_token_ids'] == b['prompt_token_ids']
-            and a['sampling_seed'] == b['sampling_seed']
-            and a['generated_token_ids_including_sampled_eos'] == b['generated_token_ids_including_sampled_eos']
-            and a['stop_reason'] == b['stop_reason']
-            for a, b in zip(clean, single))
+        noop = compare_common_contexts(clean, zero, cfg['diagnostic_token_ids'], cfg['parity_logprob_atol'])
+        batch_check = compare_common_contexts(clean, single, cfg['diagnostic_token_ids'], cfg['parity_logprob_atol'])
         eos = read_jsonl(out / 'parity_eos.jsonl')
         cap = read_jsonl(out / 'parity_cap.jsonl')[0]
         eos_ok=all(row['stop_reason']=='sampled_eos' and row['generated_token_ids_including_sampled_eos']==[row['_forced_eos']] for row in eos)
         cap_ok = cap['stop_reason'] == 'length_cap' and len(cap['generated_token_ids_including_sampled_eos']) == 1 and (cap['generated_token_ids_including_sampled_eos'][-1] != tok.eos_token_id)
-        ok = noop and batch_alignment and eos_ok and cap_ok and (batch_error <= cfg['parity_logprob_atol']) and all((v['max_abs_logprob_error'] <= cfg['parity_logprob_atol'] for v in error.values()))
+        ok = noop['within_tolerance'] and batch_check['within_tolerance'] and eos_ok and cap_ok and all((v['max_abs_logprob_error'] <= cfg['parity_logprob_atol'] for v in error.values()))
         report = {'status': 'PASS' if ok else 'FAIL',
             'processed_logprobs': True,
             'hf_comparison': error,
-            'zero_processor_exact_noop': noop,
-            'batch_size_first_context_logprob_max_error': batch_error,
-            'batch_size_prompt_seed_trajectory_alignment': batch_alignment,
+            'zero_processor_distribution_comparison': noop,
+            'batch_size_common_context_comparison': batch_check,
             'sampled_eos_retained': eos_ok,
             'eos_ids_tested': cfg['_eos_token_ids'],
             'length_cap_no_fictitious_eos': cap_ok,
@@ -137,7 +170,7 @@ def _smoke_child(cfg, mode):
     out = output_dir(cfg)
     rows = read_jsonl(out / 'perturb_smoke_contexts.jsonl')
     if mode == 'smoke-clean':
-        rows = [r for r in rows if r['eta_label'] == 'zero']
+        # Keep the complete batch layout, not only its three zero-eta rows.
         results = generate(cfg, rows, processor=False, diagnostic=True)
         write_jsonl(out / 'perturb_smoke_clean.jsonl', results)
     elif mode == 'smoke-generate':
@@ -210,9 +243,11 @@ def run_perturb_smoke(cfg):
         results = read_jsonl(out / 'perturb_smoke_rollouts.jsonl')
         clean = read_jsonl(out / 'perturb_smoke_clean.jsonl')
         by_id = {(r['source_prompt_id'], r['eta_label']): r for r in results}
-        zero_ok = all((r['logprobs'] == by_id[r['source_prompt_id'],
-            'zero']['logprobs'] and r['generated_token_ids_including_sampled_eos'] == by_id[r['source_prompt_id'],
-            'zero']['generated_token_ids_including_sampled_eos'] for r in clean))
+        zero_reference = [row for row in clean if row['eta_label'] == 'zero']
+        zero_candidate = [by_id[row['source_prompt_id'], 'zero'] for row in zero_reference]
+        zero_comparison = compare_common_contexts(zero_reference, zero_candidate,
+            cfg['diagnostic_token_ids'], cfg['parity_logprob_atol'])
+        zero_ok = zero_comparison['within_tolerance']
         signed = []
         for index, pid in enumerate(data['prompt_id'][:len(weights)]):
             pid = str(pid)
@@ -235,7 +270,9 @@ def run_perturb_smoke(cfg):
         stop_ok = all((r['stop_reason'] == 'sampled_eos' and r['generated_token_ids_including_sampled_eos'][-1] in r['eos_token_ids'] or (r['stop_reason'] == 'length_cap' and len(r['generated_token_ids_including_sampled_eos']) == cfg['max_tokens']) for r in results))
         ok = zero_ok and stop_ok and all((s['pass'] for s in signed)) and (hf['max_abs_logprob_error'] <= cfg['parity_logprob_atol'])
         report = {'status': 'PASS' if ok else 'FAIL',
-            'zero_noop_exact': zero_ok,
+            'zero_distribution_comparison': zero_comparison,
+            'reference_batch_requests': len(clean),
+            'perturbed_batch_requests': len(results),
             'signed_logodds': signed,
             'hf_processed_logprob_comparison': hf,
             'stop_metadata_consistent': stop_ok,
