@@ -8,6 +8,14 @@ import numpy as np
 from .common import output_dir, read_jsonl, write_json, write_jsonl
 from .data import frozen_config
 
+
+def diagnostic_logprobs(token_ids):
+    if not token_ids:
+        return {'logprobs': 20}
+    requested = list(token_ids)
+    # vLLM 0.32 validates this equality while rendering requests.
+    return {'logprobs': len(requested), 'logprob_token_ids': requested}
+
 def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset=0, diagnostic=False):
     os.environ['VLLM_PLUGINS'] = ''
     os.environ['VLLM_LOGITS_PROCESSOR_PLUGINS'] = ''
@@ -58,7 +66,7 @@ def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset
                     skip_special_tokens=False,
                     stop_token_ids=sorted(eos_ids))
                 if diagnostic:
-                    kw.update(logprobs=20, logprob_token_ids=cfg.get('diagnostic_token_ids'))
+                    kw.update(diagnostic_logprobs(cfg.get('diagnostic_token_ids')))
                 if processor:
                     kw['extra_args'] = {'ksrf_eta': float(etas[j] if etas is not None else 0.0),
                         'ksrf_weights': np.asarray(weights[j]).tolist() if weights is not None else [],

@@ -60,3 +60,11 @@ reproduced the reported failure before the fix, then reached engine generation
 and recorded 0.32.0 after the fix. This fixture verifies gate removal, not real
 GPU execution. The published 0.32.0 LLM, SamplingParams, EngineArgs, adapter and
 sampler interfaces used here were inspected; no package was installed or changed.
+
+vLLM 0.32 sparse-logprob follow-up: its actual `_validate_logprobs` implementation
+rejects `logprobs=20` paired with five specific token IDs. The diagnostic request
+now sets the count to the requested list length, covering both parity and fitted
+readout smoke tests. The unchanged upstream validator rejected the old request
+and accepted the fixed five-ID, six-ID and ordinary top-logprob requests in an
+isolated CPU invocation. This proves request-validation compatibility, not a
+completed GPU parity run. No dependency or environment change was made.

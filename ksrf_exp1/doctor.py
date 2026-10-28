@@ -159,7 +159,7 @@ def api_audit():
         raise RuntimeError("vLLM ModelConfig lacks processed-logprob support")
     SamplingParams(temperature=.8, top_p=1., top_k=0, min_p=0., max_tokens=8,
                    n=1, ignore_eos=False, seed=731000, extra_args={},
-                   logprobs=5, logprob_token_ids=[0, 1])
+                   logprobs=2, logprob_token_ids=[0, 1])
     if not hasattr(AdapterLogitsProcessor, "new_req_logits_processor"):
         raise RuntimeError("Unsupported vLLM AdapterLogitsProcessor API")
 
