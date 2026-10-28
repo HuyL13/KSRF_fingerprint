@@ -1,0 +1,13 @@
+# Runtime compatibility specification. run_colab.sh NEVER installs this file.
+# Torch/CUDA must already match the installed vLLM build; do not reinstall them.
+vllm==0.20.0; sys_platform == "linux"
+transformers>=4.57,<5
+accelerate>=1.0,<2
+sentence-transformers>=3.0,<6
+datasets>=3.0,<5
+huggingface-hub>=0.34,<1
+numpy>=1.26,<3
+scipy>=1.12,<2
+scikit-learn>=1.4,<2
+PyYAML>=6.0,<7
+packaging>=24,<27
