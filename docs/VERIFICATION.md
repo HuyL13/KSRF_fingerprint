@@ -43,3 +43,12 @@ and passed after integrating the local code. The delivered mathematical/replay
 diagnostic also passes after the integration. Five reused function bodies were
 compared against their original source and match exactly; the one adapted
 teacher-forcing function is explicitly documented in `LOCAL_CODE_REUSE.md`.
+
+Latest-runtime follow-up: the old Transformers `<5` and Hub `<1` bounds rejected
+the official Latest snapshot and were corrected. The standalone `doctor` command
+now checks actual imports, transitive requirements, API signatures and a native
+vLLM CUDA kernel when available. It is explicitly excluded from the Bash runner
+at the user's request; the runner now has 14 experiment stages. Runtime metadata
+needed by the report is recorded during actual clean generation instead.
+Architecture-level CPU checks on actual Qwen2/BERT implementations passed. See
+`COLAB_COMPATIBILITY.md` for the exact stack and verification limits.

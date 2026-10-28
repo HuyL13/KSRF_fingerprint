@@ -1,9 +1,11 @@
 """Mandatory offline batched vLLM decoding; no HF generation path."""
 import importlib.metadata
 import os
+import platform
+import sys
 from pathlib import Path
 import numpy as np
-from .common import output_dir, read_jsonl, write_jsonl
+from .common import output_dir, read_jsonl, write_json, write_jsonl
 from .data import frozen_config
 
 def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset=0, diagnostic=False):
@@ -124,9 +126,26 @@ def generate(cfg, records, etas=None, weights=None, processor=False, seed_offset
     return result
 
 def run(cfg):
+    import torch
     splits = ['calibration', 'heldout']
     prompts = {split: read_jsonl(output_dir(cfg) / (split + '_prompts.jsonl')) for split in splits}
     combined = generate(cfg, prompts['calibration'] + prompts['heldout'])
+    # Record the runtime actually used for the experiment; this is provenance,
+    # not a dependency scan or a gate before generation.
+    package_versions = {}
+    for name in ['torch', 'vllm', 'transformers', 'sentence-transformers', 'datasets',
+                 'numpy', 'scipy', 'scikit-learn', 'huggingface-hub']:
+        try:
+            package_versions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            package_versions[name] = None
+    write_json(output_dir(cfg) / 'environment.json', {
+        'python': sys.version, 'platform': platform.platform(), 'versions': package_versions,
+        'cuda': torch.version.cuda,
+        'gpu_names': [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())],
+        'processor_api': 'vllm.v1.sample.logits_processor.AdapterLogitsProcessor',
+        'installation_performed': False,
+        'record_type': 'runtime provenance after actual clean generation; no environment audit was run'})
     boundary = len(prompts['calibration'])
     for split, rows in [('calibration', combined[:boundary]), ('heldout', combined[boundary:])]:
         rejected = [{'prompt_id': r['prompt_id'],

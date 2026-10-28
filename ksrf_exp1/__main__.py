@@ -32,11 +32,13 @@ STAGES = {
     "tangent": ("validate_tangent", "run"),
     "report": ("report", "run"),
 }
-PIPELINE = ["preflight", "mathematics", "prepare", "parity", "clean", "readout", "replay",
+PIPELINE = ["mathematics", "prepare", "parity", "clean", "readout", "replay",
             "semantic", "fit", "gradient", "delta", "perturb-smoke", "fd", "tangent", "report"]
 
 
 def run_all(cfg):
+    if (cfg["calibration_size"], cfg["heldout_size"], cfg["num_keys"], cfg["key_rank"]) != (5000, 1500, 16, 8):
+        raise ValueError("Full Experiment 1 requires 5000 calibration, 1500 held-out, sixteen rank-eight keys")
     out = output_dir(cfg)
     if out.exists() and any(out.iterdir()):
         raise ValueError(f"Full run requires a fresh output directory: {out}")

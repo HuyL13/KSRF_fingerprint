@@ -8,9 +8,9 @@ perturbed decoding. **This experiment does not train LoRA or implant a fingerpri
 
 Use a Linux Colab GPU runtime with **bfloat16 support (L4/A100 or newer)** and an
 existing, working **vLLM 0.20.0 / compatible Torch-CUDA** environment. The complete
-dependency contract is [requirements.txt](requirements.txt). The script checks it
-and reports missing or incompatible packages; it never installs anything, creates
-an environment, or changes Torch/CUDA. Check available runtime/storage resources:
+dependency contract is [requirements.txt](requirements.txt). The Bash entrypoint
+starts the experiment directly: it does not scan the environment, install anything,
+create an environment, or change Torch/CUDA. Check available runtime/storage resources:
 the run downloads Qwen 3B, BGE and UltraChat and generates thousands of responses.
 
 Paste this single cell into Colab:
@@ -42,7 +42,7 @@ generation uses batched offline `vllm.LLM.generate`; no HF generation fallback e
 Each major GPU stage runs in a separate Python process so the vLLM engine, HF
 replay model and BGE encoder do not compete for the same GPU memory. Use
 `config.yaml` to adjust batching/VRAM utilization for the allocated GPU. Reducing
-dataset counts is rejected by the full-run preflight.
+dataset counts is rejected by the full-run experiment configuration.
 
 Default output: `outputs/<UTC-run-timestamp>/`. To persist outputs on an **already
 mounted** Drive, set `KSRF_OUTPUT_DIR` to a new directory before the command:
@@ -102,6 +102,24 @@ review pass. This optional review does not stop the Bash pipeline from completin
 all computations and producing its initial report.
 
 ## Inspect or rerun a stage
+
+Import/version/CUDA diagnostics are a **separate explicit command**, not part of
+`run_colab.sh`:
+
+```bash
+python -m ksrf_exp1.doctor --output import_audit.json
+```
+
+This checks all source imports (including imports inside functions), model-class
+imports, transitive dependency metadata, supported API signatures and a real vLLM
+CUDA RMSNorm kernel. It downloads no models and installs nothing. See
+[COLAB_COMPATIBILITY.md](docs/COLAB_COMPATIBILITY.md) for the audited Latest
+snapshot and the remaining GPU verification limit. Do not interpret a version
+match as proof of CUDA binary compatibility.
+
+The full Bash pipeline has 14 experiment stages. Mathematical score identity,
+vLLM/HF parity, EOS/length and signed-bias tests remain scientific prerequisites;
+they are not generic environment checks.
 
 The Bash entrypoint invokes the full pipeline. Individual stage entrypoints are
 also available for debugging, using a run's **resolved** configuration:
